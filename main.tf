@@ -8,8 +8,10 @@ resource "aws_instance" "example" {
 
   user_data = <<-EOF
               #!/bin/bash
-              echo "Hello, World!" > index.html
-              nohup busybox httpd -f -p 8080 &
+              mkdir -p /var/www
+              echo "Hello, World!" > /var/www/index.html
+              cd /var/www
+              nohup python3 -m http.server 8080 &
               EOF
 
   user_data_replace_on_change = true
