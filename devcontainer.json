@@ -1,0 +1,127 @@
+{
+  "name": "Terraform Up & Running — 3rd Edition",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+
+  // ── Features: install all tooling automatically ──────────────────────────
+  "features": {
+    // Terraform (latest stable via HashiCorp repo)
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "latest",
+      "tflint": "latest",
+      "terragrunt": "none"
+    },
+    // AWS CLI v2
+    "ghcr.io/devcontainers/features/aws-cli:1": {
+      "version": "latest"
+    },
+    // Python (for helper scripts, boto3, checkov)
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
+    // Node.js (required for some CDK/tooling)
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    // GitHub CLI (gh) — useful for managing repos from codespace
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    // Docker-in-Docker (needed for Packer + container examples in book)
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest"
+    }
+  },
+
+  // ── VS Code Extensions ───────────────────────────────────────────────────
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // ── HashiCorp Official ──
+        "hashicorp.terraform",           // HashiCorp Terraform (HCL syntax, fmt, validate, ls)
+        "hashicorp.hcl",                 // HCL language support
+        "hashicorp.sentinel",            // Sentinel policy as code
+
+        // ── AWS ──
+        "amazonwebservices.aws-toolkit-vscode",  // AWS Toolkit (Lambda, S3, CloudWatch, etc.)
+        "AmazonWebServices.amazon-q-vscode",     // Amazon Q (AI assistant for AWS)
+
+        // ── Terraform Quality / Linting ──
+        "aquasecurity.tfsec",            // tfsec security scanner inline hints
+        "Bridgecrew.checkov",            // Checkov IaC scanner
+        "waderyan.gitblame",             // Git blame inline
+
+        // ── General Dev Quality ──
+        "eamodio.gitlens",               // GitLens — full git history
+        "mhutchie.git-graph",            // Git graph visualizer
+        "ms-vscode.remote-explorer",     // Remote explorer
+        "redhat.vscode-yaml",            // YAML support (for GitHub Actions)
+        "ms-python.python",              // Python (for helper scripts)
+        "ms-python.vscode-pylance",      // Pylance Python intellisense
+        "esbenp.prettier-vscode",        // Prettier formatter
+        "streetsidesoftware.code-spell-checker", // Spell check in docs
+        "ms-azuretools.vscode-docker",   // Docker support
+        "mutantdino.resourcemonitor",    // Resource monitor in status bar
+        "christian-kohler.path-intellisense" // Path autocomplete
+      ],
+
+      "settings": {
+        // ── Terraform settings ──
+        "terraform.languageServer.enable": true,
+        "terraform.languageServer.args": ["serve"],
+        "[terraform]": {
+          "editor.defaultFormatter": "hashicorp.terraform",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 2
+        },
+        "[terraform-vars]": {
+          "editor.defaultFormatter": "hashicorp.terraform",
+          "editor.formatOnSave": true
+        },
+        // ── Editor general ──
+        "editor.formatOnSave": true,
+        "editor.rulers": [120],
+        "editor.tabSize": 2,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        // ── Terminal ──
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.fontSize": 14,
+        // ── Git ──
+        "git.autofetch": true,
+        "git.enableSmartCommit": true,
+        // ── AWS Toolkit ──
+        "aws.telemetry": false
+      }
+    }
+  },
+
+  // ── Ports to forward (useful for book examples) ─────────────────────────
+  "forwardPorts": [
+    8080,   // Web server examples
+    8443,   // HTTPS examples
+    9090,   // Prometheus (Ch 7 monitoring)
+    3000    // Grafana / app examples
+  ],
+
+  "portsAttributes": {
+    "8080": { "label": "App HTTP", "onAutoForward": "notify" },
+    "8443": { "label": "App HTTPS", "onAutoForward": "notify" },
+    "9090": { "label": "Prometheus", "onAutoForward": "notify" },
+    "3000": { "label": "Grafana/App", "onAutoForward": "notify" }
+  },
+
+  // ── Post-create: install additional tools not in features ────────────────
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  // ── Run as non-root ──────────────────────────────────────────────────────
+  "remoteUser": "vscode",
+
+  // ── Codespace machine size recommendation ───────────────────────────────
+  // Minimum: 4-core for running Terraform + AWS CLI comfortably
+  // Recommended: 8-core for Docker + multiple workspaces
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  }
+}
