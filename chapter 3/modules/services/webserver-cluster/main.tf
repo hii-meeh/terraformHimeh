@@ -29,14 +29,14 @@ resource "aws_launch_template" "example" {
     create_before_destroy = true
   }
 
-  user_data = templatefile(
-    "${path.module}/user-data.sh",
-    {
-      server_port = var.server_port
-      db_address  = data.terraform_remote_state.db.outputs.address
-      db_port     = data.terraform_remote_state.db.outputs.port
-    }
-  )
+user_data = base64encode(templatefile(
+  "${path.module}/user-data.sh",
+  {
+    server_port = var.server_port
+    db_address  = data.terraform_remote_state.db.outputs.address
+    db_port     = data.terraform_remote_state.db.outputs.port
+  }
+))
 }
 
 resource "aws_autoscaling_group" "example" {
