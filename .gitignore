@@ -1,3 +1,63 @@
-.terraform
+# ── Terraform ────────────────────────────────────────────────────────────────
+.terraform/
+.terraform.lock.hcl
 *.tfstate
+*.tfstate.*
 *.tfstate.backup
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ── Terraform plan files (may contain secrets) ───────────────────────────────
+*.tfplan
+*.plan
+
+# ── Variables files with secrets ─────────────────────────────────────────────
+*.tfvars
+!example.tfvars
+*.tfvars.json
+!example.tfvars.json
+
+# ── AWS credentials — NEVER commit these ─────────────────────────────────────
+.aws/
+*.pem
+*.key
+*credentials*
+*secrets*
+.env
+.env.*
+
+# ── SSH keys ─────────────────────────────────────────────────────────────────
+*.rsa
+*.pub
+id_rsa*
+id_ed25519*
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── VS Code ───────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.vscode/launch.json
+# Keep extensions.json if you want to share recommended extensions
+!.vscode/extensions.json
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Packer ────────────────────────────────────────────────────────────────────
+packer_cache/
+*.box
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.Python
+venv/
+.venv/
