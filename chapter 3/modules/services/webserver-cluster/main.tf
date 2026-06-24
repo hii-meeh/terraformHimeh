@@ -14,7 +14,7 @@ data "aws_vpc" "default" {
 
 data "aws_subnets" "default" {
   filter {
-    name   = "${var.cluster_name} - subnets"
+    name   = "vpc-id"
     values = [data.aws_vpc.default.id]
   }
 }
@@ -24,19 +24,19 @@ resource "aws_launch_template" "example" {
   instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.instance.id]
 
-  user_data = base64encode(<<-EOF
-              #!/bin/bash
-              echo "Hello, World!" > index.html
-              echo "DB address: ${data.terraform_remote_state.db.outputs.address}" >> index.html
-              echo "DB port: ${data.terraform_remote_state.db.outputs.port}" >> index.html
-              nohup busybox httpd -f -p ${var.server_port} &
-              EOF
-  )
-
   # Required when using a launch template with an Auto Scaling Group
   lifecycle {
     create_before_destroy = true
   }
+
+  user_data = templatefile(
+    "${path.module}/user-data.sh",
+    {
+      server_port = var.server_port
+      db_address  = data.terraform_remote_state.db.outputs.address
+      db_port     = data.terraform_remote_state.db.outputs.port
+    }
+  )
 }
 
 resource "aws_autoscaling_group" "example" {
@@ -63,14 +63,27 @@ resource "aws_autoscaling_group" "example" {
 resource "aws_security_group" "instance" {
   name        = "${var.cluster_name}-instance"
   description = "Security group for the example instances"
-
-  ingress {
-    from_port   = var.server_port
-    to_port     = var.server_port
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 }
+
+resource "aws_security_group_rule" "allow_inbound" {
+  type              = "ingress"
+  from_port         = local.http_port
+  to_port           = local.http_port
+  protocol          = local.tcp_protocol
+  cidr_blocks       = local.all_ips
+  security_group_id = aws_security_group.instance.id
+  
+}
+
+resource "aws_security_group_rule" "allow_outbound" {
+  type              = "egress"
+  from_port         = local.any_port
+  to_port           = local.any_port
+  protocol          = local.any_protocol
+  cidr_blocks       = local.all_ips
+  security_group_id = aws_security_group.instance.id
+  }
+
 
 resource "aws_lb" "example" {
   name               = "${var.cluster_name}-alb"
@@ -98,26 +111,30 @@ resource "aws_lb_listener" "http" {
 resource "aws_security_group" "alb" {
   name        = "${var.cluster_name}-alb"
   description = "Security group for the example ALB"
+}
 
-  # Allow inbound HTTP
-  ingress {
-    from_port   = local.http_port
-    to_port     = local.http_port
-    protocol    = local.tcp_protocol
-    cidr_blocks = local.all_ips
-  }
+resource "aws_security_group_rule" "allow_http_inbound" {
+  type              = "ingress"
+  from_port         = local.http_port
+  to_port           = local.http_port
+  protocol          = local.tcp_protocol
+  cidr_blocks       = local.all_ips
+  security_group_id = aws_security_group.alb.id
+  
+}
 
-  # Allow all outbound
-  egress {
-    from_port   = local.any_port
-    to_port     = local.any_port
-    protocol    = local.any_protocol
-    cidr_blocks = local.all_ips
-  }
+resource "aws_security_group_rule" "allow_http_outbound" {
+  type              = "egress"
+  from_port         = local.any_port
+  to_port           = local.any_port
+  protocol          = local.any_protocol
+  cidr_blocks       = local.all_ips
+  security_group_id = aws_security_group.alb.id
+  
 }
 
 resource "aws_lb_target_group" "asg" {
-  name     = "${var.cluster_name}- asg"
+  name     = "${var.cluster_name}-asg"
   port     = var.server_port
   protocol = "HTTP"
   vpc_id   = data.aws_vpc.default.id
@@ -166,3 +183,4 @@ locals {
   tcp_protocol = "tcp"
   all_ips = ["0.0.0.0/0"]
 }
+
